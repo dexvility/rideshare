@@ -115,7 +115,7 @@ export function RideOfferCard({ offer, currentUserId, onJoin, onEdit, onDelete, 
           <span style={{ fontStyle: 'italic' }}>· 🔒 {t.phoneHidden}</span>
         )}
         {canSeeDriverContact && !isOwner && (
-          <span>· {offer.driver.phone}</span>
+          <span>· {offer.driver.phone ?? ''}</span>
         )}
       </div>
 
@@ -124,7 +124,7 @@ export function RideOfferCard({ offer, currentUserId, onJoin, onEdit, onDelete, 
         <div style={{ marginTop: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           {offer.joins.map(j => (
             <div key={j.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', background: 'var(--color-background)', padding: '0.375rem 0.625rem', borderRadius: 'calc(var(--border-radius) * 0.6)', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span>🧑‍🤝‍🧑 {j.user.realName} ({j.user.phone}) {j.seats > 1 ? `+${j.seats - 1}` : ''}</span>
+              <span>🧑‍🤝‍🧑 {j.user.realName} {j.user.phone ? `(${j.user.phone})` : ''} {j.seats > 1 ? `+${j.seats - 1}` : ''}</span>
               <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
                 <ContactButton
                   name={j.user.realName}

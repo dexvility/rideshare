@@ -5,7 +5,7 @@ import { useLocale } from '@/app/providers';
 
 interface ContactButtonProps {
   name: string;
-  phone: string;
+  phone: string | null;
   hasTelegram: boolean;
   hasWhatsapp: boolean;
   hasSignal: boolean;
@@ -43,7 +43,8 @@ const IM_ICONS: Record<string, string> = {
   sms: '✉️',
 };
 
-export function ContactButton({ name, phone, hasTelegram, hasWhatsapp, hasSignal, hasSms, preferredIM }: ContactButtonProps) {
+export function ContactButton({ name, phone: phoneProp, hasTelegram, hasWhatsapp, hasSignal, hasSms, preferredIM }: ContactButtonProps) {
+  const phone = phoneProp ?? '';
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
