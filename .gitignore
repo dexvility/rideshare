@@ -1,4 +1,12 @@
 .next/
 node_modules/
 .env
+.env.local
+.env.*.local
 *.log
+docker-compose.yml
+pgdata/
+cache/
+*.tar.gz
+*.tar
+.DS_Store

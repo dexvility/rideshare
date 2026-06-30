@@ -1,0 +1,45 @@
+# Local-only deployment: exposes the app on http://localhost:3000, no reverse
+# proxy or TLS termination. See README.md for guides on putting this behind
+# Traefik, Caddy, or nginx with TLS for a real public deployment.
+services:
+  rideshare:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rideshare
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://rideshare:${POSTGRES_PASSWORD}@rideshare-db:5432/rideshare"
+      ADMIN_SECRET: "${ADMIN_SECRET}"
+      NTFY_URL: "${NTFY_URL:-https://ntfy.sh}"
+      DEMO_DATA: "${DEMO_DATA:-false}"
+      NODE_ENV: "production"
+      NEXT_PUBLIC_ADMIN_ENABLED: "true"
+      NEXT_PUBLIC_APP_NAME: "${APP_NAME:-Ride Share}"
+      NEXT_PUBLIC_HERO_EMOJI: "${HERO_EMOJI:-🚗}"
+      NEXT_PUBLIC_H1_TITLE: "${H1_TITLE:-Ride Sharing}"
+      NEXT_PUBLIC_H2_SUBTITLE: "${H2_SUBTITLE:-Find or offer a ride}"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ./data/cache:/app/.next/cache
+      - ./data/pgdata:/var/lib/postgresql/data
+    depends_on:
+      rideshare-db:
+        condition: service_healthy
+
+  rideshare-db:
+    image: postgres:16-alpine
+    container_name: rideshare-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rideshare
+      POSTGRES_USER: rideshare
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - ./data/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rideshare -d rideshare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
