@@ -127,6 +127,8 @@ export const translations = {
     coPassengerName: 'Jméno spolucestujícího',
     coPassengerPhone: 'Telefon spolucestujícího',
     addCoPassenger: 'Spolucestující',
+    coPassengerFillAll: 'Vyplňte jméno a telefon pro všechny spolucestující.',
+    coPassengerPhoneInvalid: 'Neplatné telefonní číslo spolucestujícího.',
 
     contact: 'Kontakt',
     copyPhone: 'Zkopírovat telefon',
@@ -289,6 +291,8 @@ export const translations = {
     coPassengerName: "Co-passenger's name",
     coPassengerPhone: "Co-passenger's phone",
     addCoPassenger: 'Co-passenger',
+    coPassengerFillAll: 'Fill in name and phone for all co-passengers.',
+    coPassengerPhoneInvalid: 'Invalid phone number for a co-passenger.',
 
     contact: 'Contact',
     copyPhone: 'Copy phone number',

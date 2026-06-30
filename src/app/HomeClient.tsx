@@ -419,7 +419,19 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
               <button
                 className="btn-primary"
                 disabled={joinSeats < 1 || joinSeats > modal.offer.availableSeats}
-                onClick={() => handleJoinOffer(modal.offer.id, joinSeats, coPassengers)}
+                onClick={() => {
+                  for (const cp of coPassengers) {
+                    if (!cp.name.trim() || !cp.phone.trim()) {
+                      setJoinError(t.coPassengerFillAll);
+                      return;
+                    }
+                    if (!isValidPhone(cp.phone)) {
+                      setJoinError(t.coPassengerPhoneInvalid);
+                      return;
+                    }
+                  }
+                  handleJoinOffer(modal.offer.id, joinSeats, coPassengers);
+                }}
               >
                 {t.joinOffer}
               </button>
@@ -444,6 +456,11 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
+}
+
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 9;
 }
 
 function EmptyState({ message, action, actionLabel }: { message: string; action: () => void; actionLabel: string }) {
