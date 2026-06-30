@@ -2,10 +2,12 @@
 export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/session';
+import { AUTH_MODE } from '@/lib/auth-config';
 import { ProfileClient } from './ProfileClient';
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth');
-  return <ProfileClient user={JSON.parse(JSON.stringify(user))} />;
+  if (!user.profileComplete) redirect('/auth/complete-profile');
+  return <ProfileClient user={JSON.parse(JSON.stringify(user))} authMode={AUTH_MODE} />;
 }

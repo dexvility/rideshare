@@ -19,6 +19,20 @@ services:
       NEXT_PUBLIC_HERO_EMOJI: "${HERO_EMOJI:-🚗}"
       NEXT_PUBLIC_H1_TITLE: "${H1_TITLE:-Ride Sharing}"
       NEXT_PUBLIC_H2_SUBTITLE: "${H2_SUBTITLE:-Find or offer a ride}"
+      # Auth mode: "phone" (default) or "password"
+      AUTH_MODE: "${AUTH_MODE:-phone}"
+      APP_URL: "${APP_URL:-http://localhost:3000}"
+      # Google OAuth (only used when AUTH_MODE=password)
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
+      GOOGLE_CALLBACK_URL: "${GOOGLE_CALLBACK_URL:-}"
+      # SMTP relay for email flows (only used when AUTH_MODE=password)
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_SECURE: "${SMTP_SECURE:-false}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM: "${SMTP_FROM:-}"
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createSession } from '@/lib/session';
+import { AUTH_MODE } from '@/lib/auth-config';
+import { isValidPhone } from '@/lib/validate';
 import { randomUUID } from 'crypto';
 
 function generateNickname(realName: string): string {
@@ -16,9 +18,16 @@ function generateNickname(realName: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (AUTH_MODE !== 'phone') {
+    return NextResponse.json({ error: 'Phone auth is disabled' }, { status: 403 });
+  }
   try {
     const body = await req.json();
     const { action, realName, phone } = body;
+
+    if (!phone || !isValidPhone(phone)) {
+      return NextResponse.json({ error: 'invalidPhone' }, { status: 400 });
+    }
 
     if (action === 'login') {
       const user = await prisma.user.findUnique({ where: { phone } });

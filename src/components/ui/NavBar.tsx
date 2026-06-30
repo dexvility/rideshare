@@ -132,26 +132,29 @@ export function NavBar({ user, appName, heroEmoji }: NavBarProps) {
                       ⚙️ {t.admin}
                     </Link>
                   )}
-                  <form action="/api/auth/signout" method="POST">
-                    <button
-                      type="submit"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.75rem 1rem',
-                        color: 'var(--color-error)',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
-                        borderTop: '1px solid var(--color-border)',
-                      }}
-                      className="hover:bg-red-50"
-                    >
-                      🚪 {t.signOut}
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await fetch('/api/auth/signout', { method: 'POST' });
+                      window.location.href = '/auth';
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.75rem 1rem',
+                      color: 'var(--color-error)',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      borderTop: '1px solid var(--color-border)',
+                    }}
+                    className="hover:bg-red-50"
+                  >
+                    🚪 {t.signOut}
+                  </button>
                 </div>
               )}
             </div>

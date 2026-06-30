@@ -8,6 +8,7 @@ import { MyRidesClient } from './MyRidesClient';
 export default async function MyRidesPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth');
+  if (!user.profileComplete) redirect('/auth/complete-profile');
 
   const [myOffers, myRequests, passengerJoins] = await Promise.all([
     prisma.rideOffer.findMany({
