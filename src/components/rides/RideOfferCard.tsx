@@ -31,7 +31,7 @@ export function RideOfferCard({ offer, currentUserId, onJoin, onEdit, onDelete, 
   const myJoin = offer.joins.find(j => j.userId === currentUserId);
   const hasJoined = !!myJoin;
   const fee = Number(offer.fee);
-  const isGreyedOut = offer.isFull && !isOwner && !hasJoined;
+  const isGreyedOut = (offer.isFull || offer.availableSeats <= 0) && !isOwner && !hasJoined;
 
   function formatDate(d: Date | string) {
     return new Date(d).toLocaleDateString('cs-CZ', { weekday: 'short', day: 'numeric', month: 'short' });
