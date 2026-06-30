@@ -1,0 +1,36 @@
+{
+  "name": "rideshare",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "date-fns": "^3.6.0",
+    "uuid": "^10.0.0",
+    "cookie": "^0.6.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "typescript": "^5.6.0",
+    "@types/react": "^18.3.0",
+    "@types/node": "^22.0.0",
+    "@types/leaflet": "^1.9.14",
+    "@types/cookie": "^0.6.0",
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47"
+  }
+}

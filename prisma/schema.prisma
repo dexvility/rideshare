@@ -1,0 +1,123 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  nickname    String   @unique
+  realName    String
+  phone       String   @unique
+  email       String?  @unique
+  hasSms      Boolean  @default(false)
+  hasTelegram Boolean  @default(false)
+  hasWhatsapp Boolean  @default(false)
+  hasSignal   Boolean  @default(false)
+  preferredIM String?  // "telegram" | "whatsapp" | "signal"
+  notifyOffers    Boolean @default(false)
+  notifyRequests  Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions    Session[]
+  offers      RideOffer[]
+  requests    RideRequest[]
+  joinedOffers OfferJoin[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+}
+
+model RideOffer {
+  id              String    @id @default(uuid())
+  driverId        String
+  driver          User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  fromAddress     String
+  fromLat         Float
+  fromLng         Float
+  toAddress       String
+  toLat           Float
+  toLng           Float
+  date            DateTime  @db.Date
+  departureTime   String    // "HH:MM"
+  estimatedArrival String?  // "HH:MM"
+  totalSeats      Int
+  availableSeats  Int
+  carMake         String
+  carModel        String
+  allowsDetours   Boolean   @default(false)
+  isFlexibleTime  Boolean   @default(false)
+  fee             Decimal   @default(0) @db.Decimal(8, 2)
+  isFull          Boolean   @default(false)
+  isCancelled     Boolean   @default(false)
+  isReturnRide    Boolean   @default(false)
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  joins           OfferJoin[]
+}
+
+model RideRequest {
+  id            String    @id @default(uuid())
+  requesterId   String
+  requester     User      @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  fromAddress   String
+  fromLat       Float
+  fromLng       Float
+  toAddress     String
+  toLat         Float
+  toLng         Float
+  date          DateTime  @db.Date
+  desiredTime   String    // "HH:MM"
+  isFlexibleTime Boolean  @default(false)
+  passengerCount Int      @default(1)
+  notes         String?
+  isFulfilled   Boolean   @default(false)
+  fulfilledByOfferId String?
+  isCancelled   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model OfferJoin {
+  id        String    @id @default(uuid())
+  offerId   String
+  offer     RideOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seats     Int       @default(1)
+  createdAt DateTime  @default(now())
+
+  coPassengers OfferJoinPassenger[]
+
+  @@unique([offerId, userId])
+}
+
+model OfferJoinPassenger {
+  id          String    @id @default(uuid())
+  offerJoinId String
+  offerJoin   OfferJoin @relation(fields: [offerJoinId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String
+  createdAt   DateTime  @default(now())
+}
+
+model ThemeConfig {
+  id        Int      @id @default(1)
+  config    Json
+  customCss String   @default("")
+  updatedAt DateTime @updatedAt
+}
