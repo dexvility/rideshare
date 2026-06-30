@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   if (sessionId) {
     try { await prisma.session.delete({ where: { id: sessionId } }); } catch {}
   }
-  const res = NextResponse.redirect(new URL('/auth', req.url));
+  const res = NextResponse.json({ ok: true });
   res.cookies.set('rideshare_session', '', { maxAge: 0, path: '/' });
   return res;
 }
