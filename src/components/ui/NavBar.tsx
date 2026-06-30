@@ -41,6 +41,25 @@ export function NavBar({ user, appName, heroEmoji }: NavBarProps) {
           </span>
         </Link>
 
+        {user && (
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link
+              href="/"
+              style={{ color: '#fff', fontSize: '0.875rem', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', textDecoration: 'none', opacity: 0.9 }}
+              className="hover:bg-white/20"
+            >
+              🛣️ {t.allRides}
+            </Link>
+            <Link
+              href="/my-rides"
+              style={{ color: '#fff', fontSize: '0.875rem', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', textDecoration: 'none', opacity: 0.9 }}
+              className="hover:bg-white/20"
+            >
+              🚗 {t.myRides}
+            </Link>
+          </nav>
+        )}
+
         <div className="flex items-center gap-2">
           {/* Locale switcher */}
           <button
@@ -78,7 +97,7 @@ export function NavBar({ user, appName, heroEmoji }: NavBarProps) {
                 }}
               >
                 <span>👤</span>
-                <span className="hidden sm:inline">{user.nickname}</span>
+                <span className="hidden sm:inline">{user.nickname.replace(/_[^_]+$/, '')}</span>
                 <span style={{ fontSize: '0.625rem' }}>▼</span>
               </button>
 
@@ -97,20 +116,6 @@ export function NavBar({ user, appName, heroEmoji }: NavBarProps) {
                   }}
                   onClick={() => setMenuOpen(false)}
                 >
-                  <Link
-                    href="/"
-                    style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none' }}
-                    className="hover:bg-gray-50"
-                  >
-                    🛣️ {t.allRides}
-                  </Link>
-                  <Link
-                    href="/my-rides"
-                    style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none' }}
-                    className="hover:bg-gray-50"
-                  >
-                    🚗 {t.myRides}
-                  </Link>
                   <Link
                     href="/profile"
                     style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none' }}

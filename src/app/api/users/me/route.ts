@@ -13,8 +13,12 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { realName, phone, email, hasSms, hasTelegram, hasWhatsapp, hasSignal, preferredIM, notifyOffers, notifyRequests } = body;
+  const { nickname, realName, phone, email, hasSms, hasTelegram, hasWhatsapp, hasSignal, preferredIM, notifyOffers, notifyRequests } = body;
 
+  if (nickname && nickname !== session.user.nickname) {
+    const existing = await prisma.user.findUnique({ where: { nickname } });
+    if (existing) return NextResponse.json({ error: 'nicknameExists' }, { status: 409 });
+  }
   // Phone uniqueness check (can't steal another user's phone)
   if (phone && phone !== session.user.phone) {
     const existing = await prisma.user.findUnique({ where: { phone } });
@@ -29,6 +33,7 @@ export async function PATCH(req: NextRequest) {
   const updated = await prisma.user.update({
     where: { id: session.userId },
     data: {
+      ...(nickname !== undefined && { nickname }),
       ...(realName !== undefined && { realName }),
       ...(phone !== undefined && { phone }),
       ...(email !== undefined && { email: normalizedEmail }),

@@ -11,6 +11,7 @@ interface ProfileClientProps {
 export function ProfileClient({ user: initialUser }: ProfileClientProps) {
   const { t } = useLocale();
   const [user, setUser] = useState(initialUser);
+  const [nickname, setNickname] = useState(user.nickname);
   const [realName, setRealName] = useState(user.realName);
   const [phone, setPhone] = useState(user.phone);
   const [email, setEmail] = useState(user.email || '');
@@ -45,7 +46,7 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        realName, phone, email,
+        nickname, realName, phone, email,
         hasSms, hasTelegram, hasWhatsapp, hasSignal,
         preferredIM: tickedIMs.length > 1 ? preferredIM : tickedIMs[0] || null,
         notifyOffers, notifyRequests,
@@ -79,10 +80,14 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
 
       <div className="card" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
         <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-          Přezdívka: <strong>{user.nickname}</strong> · ID: <code style={{ fontSize: '0.75rem' }}>{user.id.slice(0, 8)}…</code>
+          ID: <code style={{ fontSize: '0.75rem' }}>{user.id.slice(0, 8)}…</code>
         </p>
 
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>{t.nickname}</label>
+            <input className="input-base" value={nickname} onChange={e => setNickname(e.target.value)} required />
+          </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>{t.realName}</label>
             <input className="input-base" value={realName} onChange={e => setRealName(e.target.value)} required />
