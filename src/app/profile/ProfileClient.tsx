@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLocale } from '@/app/providers';
 import type { User } from '@prisma/client';
 import type { AuthMode } from '@/lib/auth-config';
-import { isValidPhone } from '@/lib/validate';
+import { isValidPhone, isValidEmail } from '@/lib/validate';
 
 interface ProfileClientProps {
   user: User;
@@ -44,6 +44,10 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
     e.preventDefault();
     if (phone && !isValidPhone(phone)) {
       setError(t.invalidPhone);
+      return;
+    }
+    if (email && !isValidEmail(email)) {
+      setError(t.invalidEmail);
       return;
     }
     setLoading(true);

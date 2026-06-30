@@ -27,7 +27,8 @@ type ModalState =
   | { type: 'request-form'; edit?: RequestWithUser }
   | { type: 'return-ride'; offer: OfferWithDetails }
   | { type: 'join'; offer: OfferWithDetails }
-  | { type: 'pickup-picker'; request: RequestWithUser };
+  | { type: 'pickup-picker'; request: RequestWithUser }
+  | { type: 'add-phone'; next: ModalState };
 
 interface HomeClientProps {
   initialOffers: OfferWithDetails[];
@@ -50,6 +51,17 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
   const [coPassengers, setCoPassengers] = useState<CoPassengerInput[]>([]);
   const [joinError, setJoinError] = useState('');
   const [toast, setToast] = useState('');
+  const [userPhone, setUserPhone] = useState(currentUser.phone ?? '');
+
+  function openNewOffer(prefill?: any) {
+    const next: ModalState = { type: 'offer-form', prefill };
+    if (!userPhone) { setModal({ type: 'add-phone', next }); } else { setModal(next); }
+  }
+
+  function openNewRequest() {
+    const next: ModalState = { type: 'request-form' };
+    if (!userPhone) { setModal({ type: 'add-phone', next }); } else { setModal(next); }
+  }
 
   function showToast(msg: string) {
     setToast(msg);
@@ -180,10 +192,10 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
         <div className="accent-line" />
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-          <button className="btn-primary" onClick={() => setModal({ type: 'offer-form' })} style={{ fontSize: '0.95rem' }}>
+          <button className="btn-primary" onClick={() => openNewOffer()} style={{ fontSize: '0.95rem' }}>
             🚗 {t.offerRide}
           </button>
-          <button className="btn-secondary" onClick={() => setModal({ type: 'request-form' })} style={{ fontSize: '0.95rem' }}>
+          <button className="btn-secondary" onClick={() => openNewRequest()} style={{ fontSize: '0.95rem' }}>
             🙋 {t.requestRide}
           </button>
         </div>
@@ -225,7 +237,7 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
       {tab === 'offers' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {offers.length === 0
-            ? <EmptyState message={t.noOffers} action={() => setModal({ type: 'offer-form' })} actionLabel={t.offerRide} />
+            ? <EmptyState message={t.noOffers} action={() => openNewOffer()} actionLabel={t.offerRide} />
             : offers.map(offer => (
               <RideOfferCard
                 key={offer.id}
@@ -248,7 +260,7 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
       {tab === 'requests' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {requests.length === 0
-            ? <EmptyState message={t.noRequests} action={() => setModal({ type: 'request-form' })} actionLabel={t.requestRide} />
+            ? <EmptyState message={t.noRequests} action={() => openNewRequest()} actionLabel={t.requestRide} />
             : requests.map(req => (
               <RideRequestCard
                 key={req.id}
@@ -319,22 +331,19 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
                 className="btn-primary"
                 onClick={() => {
                   const o = modal.offer;
-                  setModal({
-                    type: 'offer-form',
-                    prefill: {
-                      fromAddress: o.toAddress, fromLat: o.toLat, fromLng: o.toLng,
-                      toAddress: o.fromAddress, toLat: o.fromLat, toLng: o.fromLng,
-                      date: o.date.toString().slice(0, 10),
-                      departureTime: o.estimatedArrival || o.departureTime,
-                      estimatedArrival: '',
-                      totalSeats: o.totalSeats,
-                      carMake: o.carMake,
-                      carModel: o.carModel,
-                      allowsDetours: o.allowsDetours,
-                      fee: Number(o.fee),
-                      notes: '',
-                      isReturnRide: true,
-                    },
+                  openNewOffer({
+                    fromAddress: o.toAddress, fromLat: o.toLat, fromLng: o.toLng,
+                    toAddress: o.fromAddress, toLat: o.fromLat, toLng: o.fromLng,
+                    date: o.date.toString().slice(0, 10),
+                    departureTime: o.estimatedArrival || o.departureTime,
+                    estimatedArrival: '',
+                    totalSeats: o.totalSeats,
+                    carMake: o.carMake,
+                    carModel: o.carModel,
+                    allowsDetours: o.allowsDetours,
+                    fee: Number(o.fee),
+                    notes: '',
+                    isReturnRide: true,
                   });
                 }}
               >
@@ -346,6 +355,16 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
             </div>
           </div>
         </div>
+      )}
+
+      {modal.type === 'add-phone' && (
+        <AddPhoneModal
+          onClose={() => setModal({ type: 'none' })}
+          onSaved={(phone) => {
+            setUserPhone(phone);
+            setModal(modal.next);
+          }}
+        />
       )}
 
       {modal.type === 'join' && (
@@ -450,11 +469,66 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
             await refreshData();
             showToast('✓ Cestující zajištěn.');
           }}
-          onNeedsOffer={() => setModal({ type: 'offer-form' })}
+          onNeedsOffer={() => openNewOffer()}
         />
       )}
 
       {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+function AddPhoneModal({ onClose, onSaved }: { onClose: () => void; onSaved: (phone: string) => void }) {
+  const { t } = useLocale();
+  const [phone, setPhone] = useState('+420');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isValidPhone(phone)) { setError(t.invalidPhone); return; }
+    setLoading(true);
+    const res = await fetch('/api/users/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    setLoading(false);
+    if (!res.ok) { setError(t.serverError ?? 'Error saving phone'); return; }
+    onSaved(phone);
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box" style={{ maxWidth: '380px' }}>
+        <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '0.5rem' }}>📱</div>
+        <h2 style={{ fontFamily: 'var(--font-display), Georgia, serif', fontSize: '1.25rem', fontWeight: 700, textAlign: 'center', marginBottom: '0.5rem' }}>
+          {t.phoneRequiredTitle}
+        </h2>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+          {t.phoneRequiredDesc}
+        </p>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          <input
+            className="input-base"
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            autoFocus
+            placeholder="+420 777 123 456"
+            required
+          />
+          {error && <p style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{error}</p>}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1 }}>
+              {loading ? '…' : t.saveAndContinue}
+            </button>
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              {t.cancel}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

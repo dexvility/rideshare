@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AUTH_MODE } from '@/lib/auth-config';
 import { hashPassword, isStrongPassword } from '@/lib/password';
+import { isValidEmail } from '@/lib/validate';
 import { createSession } from '@/lib/session';
 import { createVerificationToken } from '@/lib/verification-token';
 import { sendVerificationEmail } from '@/lib/mail';
@@ -27,6 +28,9 @@ export async function POST(req: NextRequest) {
 
   if (!realName?.trim() || !email?.trim() || !password) {
     return NextResponse.json({ error: 'fillRequired' }, { status: 400 });
+  }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: 'invalidEmail' }, { status: 400 });
   }
   if (!isStrongPassword(password)) {
     return NextResponse.json({ error: 'passwordTooWeak' }, { status: 400 });

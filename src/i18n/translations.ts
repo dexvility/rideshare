@@ -128,6 +128,10 @@ export const translations = {
     coPassengerPhone: 'Telefon spolucestujícího',
     addCoPassenger: 'Spolucestující',
     invalidPhone: 'Zadejte platné telefonní číslo (např. +420 777 123 456).',
+    invalidEmail: 'Zadejte platnou e-mailovou adresu.',
+    phoneRequiredTitle: 'Přidejte telefonní číslo',
+    phoneRequiredDesc: 'Abyste mohli nabídnout jízdu, cestující potřebují způsob, jak vás kontaktovat. Přidejte prosím telefonní číslo.',
+    saveAndContinue: 'Uložit a pokračovat',
     coPassengerFillAll: 'Vyplňte jméno a telefon pro všechny spolucestující.',
     coPassengerPhoneInvalid: 'Neplatné telefonní číslo spolucestujícího.',
 
@@ -318,6 +322,10 @@ export const translations = {
     coPassengerPhone: "Co-passenger's phone",
     addCoPassenger: 'Co-passenger',
     invalidPhone: 'Enter a valid phone number (e.g. +420 777 123 456).',
+    invalidEmail: 'Enter a valid email address.',
+    phoneRequiredTitle: 'Add a phone number',
+    phoneRequiredDesc: 'Passengers need a way to contact you before you can offer a ride. Please add your phone number.',
+    saveAndContinue: 'Save and continue',
     coPassengerFillAll: 'Fill in name and phone for all co-passengers.',
     coPassengerPhoneInvalid: 'Invalid phone number for a co-passenger.',
 

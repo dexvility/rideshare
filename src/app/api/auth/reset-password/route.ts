@@ -4,6 +4,7 @@ import { AUTH_MODE } from '@/lib/auth-config';
 import { createVerificationToken, consumeVerificationToken } from '@/lib/verification-token';
 import { sendPasswordResetEmail } from '@/lib/mail';
 import { hashPassword, isStrongPassword } from '@/lib/password';
+import { isValidEmail } from '@/lib/validate';
 
 // POST /api/auth/reset-password — request a reset link
 export async function POST(req: NextRequest) {
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
 
   const { email } = await req.json();
   if (!email?.trim()) return NextResponse.json({ error: 'fillRequired' }, { status: 400 });
+  if (!isValidEmail(email)) return NextResponse.json({ ok: true }); // silent: don't reveal format errors
 
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
 

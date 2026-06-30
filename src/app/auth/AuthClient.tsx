@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from '@/app/providers';
 import type { AuthMode } from '@/lib/auth-config';
-import { isValidPhone } from '@/lib/validate';
+import { isValidPhone, isValidEmail } from '@/lib/validate';
 
 type PhoneFlow = 'choose' | 'login' | 'register';
 type PasswordFlow = 'login' | 'register' | 'forgot';
@@ -147,6 +147,7 @@ function PasswordAuth({ googleEnabled, oauthError }: { googleEnabled: boolean; o
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidEmail(email)) { setError(t.invalidEmail); return; }
     if (password !== confirmPassword) { setError(t.passwordMismatch); return; }
     setLoading(true); setError('');
     const res = await fetch('/api/auth/password/register', {
@@ -162,6 +163,7 @@ function PasswordAuth({ googleEnabled, oauthError }: { googleEnabled: boolean; o
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidEmail(email)) { setError(t.invalidEmail); return; }
     setLoading(true); setError('');
     await fetch('/api/auth/reset-password', {
       method: 'POST',
