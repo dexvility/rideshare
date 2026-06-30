@@ -15,7 +15,7 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
   const [user, setUser] = useState(initialUser);
   const [nickname, setNickname] = useState(user.nickname);
   const [realName, setRealName] = useState(user.realName);
-  const [phone, setPhone] = useState(user.phone);
+  const [phone, setPhone] = useState(user.phone ?? '');
   const [email, setEmail] = useState(user.email || '');
   const [hasSms, setHasSms] = useState(user.hasSms);
   const [hasTelegram, setHasTelegram] = useState(user.hasTelegram);
