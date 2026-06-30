@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { GOOGLE_ENABLED } from '@/lib/auth-config';
 import { exchangeGoogleCode } from '@/lib/google-oidc';
 import { createSession } from '@/lib/session';
+import { redirectTo } from '@/lib/request-url';
 import { randomUUID } from 'crypto';
 
 function generateNickname(realName: string): string {
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
   const savedState = req.cookies.get('google_oauth_state')?.value;
 
   if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/auth?error=oauth_state', req.url));
+    return NextResponse.redirect(redirectTo('/auth?error=oauth_state', req));
   }
 
   let profile;
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
     profile = await exchangeGoogleCode(code);
   } catch (e) {
     console.error('Google token exchange failed:', e);
-    return NextResponse.redirect(new URL('/auth?error=oauth_failed', req.url));
+    return NextResponse.redirect(redirectTo('/auth?error=oauth_failed', req));
   }
 
   // Find or create user
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
 
   const sessionId = await createSession(user.id);
   const destination = user.profileComplete ? '/' : '/auth/complete-profile';
-  const res = NextResponse.redirect(new URL(destination, req.url));
+  const res = NextResponse.redirect(redirectTo(destination, req));
 
   res.cookies.set('rideshare_session', sessionId, {
     httpOnly: true,
