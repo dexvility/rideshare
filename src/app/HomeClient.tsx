@@ -9,6 +9,7 @@ import { OfferRideForm } from '@/components/rides/OfferRideForm';
 import { RequestRideForm } from '@/components/rides/RequestRideForm';
 import { PickupPickerModal } from '@/components/rides/PickupPickerModal';
 import type { RideOffer, RideRequest, User, OfferJoin, OfferJoinPassenger } from '@prisma/client';
+import { isValidPhone } from '@/lib/validate';
 
 interface OfferWithDetails extends RideOffer {
   driver: User;
@@ -456,11 +457,6 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
-}
-
-function isValidPhone(phone: string): boolean {
-  const digits = phone.replace(/\D/g, '');
-  return digits.length >= 9;
 }
 
 function EmptyState({ message, action, actionLabel }: { message: string; action: () => void; actionLabel: string }) {

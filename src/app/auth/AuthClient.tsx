@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from '@/app/providers';
 import type { AuthMode } from '@/lib/auth-config';
+import { isValidPhone } from '@/lib/validate';
 
 type PhoneFlow = 'choose' | 'login' | 'register';
 type PasswordFlow = 'login' | 'register' | 'forgot';
@@ -60,11 +61,13 @@ function PhoneAuth() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidPhone(loginPhone)) { setError(t.invalidPhone); return; }
     if (await submit({ action: 'login', phone: loginPhone })) { router.push('/'); router.refresh(); }
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidPhone(phone)) { setError(t.invalidPhone); return; }
     if (await submit({
       action: 'register', realName, phone, hasSms, hasTelegram, hasWhatsapp, hasSignal,
       preferredIM: tickedIMs.length > 1 ? preferredIM : tickedIMs[0] || null,

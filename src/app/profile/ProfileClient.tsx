@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLocale } from '@/app/providers';
 import type { User } from '@prisma/client';
 import type { AuthMode } from '@/lib/auth-config';
+import { isValidPhone } from '@/lib/validate';
 
 interface ProfileClientProps {
   user: User;
@@ -41,6 +42,10 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    if (phone && !isValidPhone(phone)) {
+      setError(t.invalidPhone);
+      return;
+    }
     setLoading(true);
     setError('');
 

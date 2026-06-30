@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from '@/app/providers';
+import { isValidPhone } from '@/lib/validate';
 
 export function CompleteProfileClient() {
   const { t } = useLocale();
@@ -17,6 +18,7 @@ export function CompleteProfileClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidPhone(phone)) { setError(t.invalidPhone); return; }
     setLoading(true); setError('');
 
     const res = await fetch('/api/users/me', {
