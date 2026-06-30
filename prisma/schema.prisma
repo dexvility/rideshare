@@ -9,25 +9,53 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  nickname    String   @unique
-  realName    String
-  phone       String   @unique
-  email       String?  @unique
-  hasSms      Boolean  @default(false)
-  hasTelegram Boolean  @default(false)
-  hasWhatsapp Boolean  @default(false)
-  hasSignal   Boolean  @default(false)
-  preferredIM String?  // "telegram" | "whatsapp" | "signal"
-  notifyOffers    Boolean @default(false)
-  notifyRequests  Boolean @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid())
+  nickname        String   @unique
+  realName        String
+  phone           String?  @unique
+  email           String?  @unique
+  passwordHash    String?
+  emailVerified   Boolean  @default(false)
+  profileComplete Boolean  @default(true)
+  hasSms          Boolean  @default(false)
+  hasTelegram     Boolean  @default(false)
+  hasWhatsapp     Boolean  @default(false)
+  hasSignal       Boolean  @default(false)
+  preferredIM     String?
+  notifyOffers    Boolean  @default(false)
+  notifyRequests  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  sessions    Session[]
-  offers      RideOffer[]
-  requests    RideRequest[]
-  joinedOffers OfferJoin[]
+  sessions           Session[]
+  offers             RideOffer[]
+  requests           RideRequest[]
+  joinedOffers       OfferJoin[]
+  verificationTokens VerificationToken[]
+  oidcAccounts       OidcAccount[]
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OidcAccount {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider String
+  sub      String
+
+  @@unique([provider, sub])
+  @@index([userId])
 }
 
 model Session {

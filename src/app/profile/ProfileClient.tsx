@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useLocale } from '@/app/providers';
 import type { User } from '@prisma/client';
+import type { AuthMode } from '@/lib/auth-config';
 
 interface ProfileClientProps {
   user: User;
+  authMode: AuthMode;
 }
 
-export function ProfileClient({ user: initialUser }: ProfileClientProps) {
+export function ProfileClient({ user: initialUser, authMode }: ProfileClientProps) {
   const { t } = useLocale();
   const [user, setUser] = useState(initialUser);
   const [nickname, setNickname] = useState(user.nickname);
@@ -165,6 +167,68 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
         </form>
       </div>
 
+      {toast && <div className="toast">{toast}</div>}
+
+      {authMode === 'password' && (
+        <ChangePasswordSection hasPassword={!!initialUser.passwordHash} />
+      )}
+    </div>
+  );
+}
+
+function ChangePasswordSection({ hasPassword }: { hasPassword: boolean }) {
+  const { t } = useLocale();
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
+
+  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000); }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (next !== confirm) { setError(t.passwordMismatch); return; }
+    setLoading(true); setError('');
+    const res = await fetch('/api/auth/password/change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: current, newPassword: next }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) { setError(t[data.error as keyof typeof t] as string || data.error); return; }
+    setCurrent(''); setNext(''); setConfirm('');
+    showToast(t.saved);
+  }
+
+  return (
+    <div className="card" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
+      <h2 style={{ fontFamily: 'var(--font-display), Georgia, serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem' }}>
+        🔑 {t.changePassword}
+      </h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        {hasPassword && (
+          <div>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>{t.currentPassword}</label>
+            <input className="input-base" type="password" value={current} onChange={e => setCurrent(e.target.value)} required />
+          </div>
+        )}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>{t.newPassword}</label>
+          <input className="input-base" type="password" value={next} onChange={e => setNext(e.target.value)} required />
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>{t.passwordHint}</p>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>{t.confirmPassword}</label>
+          <input className="input-base" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required />
+        </div>
+        {error && <p style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{error}</p>}
+        <button type="submit" className="btn-primary" disabled={loading} style={{ alignSelf: 'flex-start' }}>
+          {loading ? '…' : t.changePassword}
+        </button>
+      </form>
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

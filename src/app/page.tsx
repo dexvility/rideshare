@@ -9,6 +9,7 @@ import { HomeClient } from './HomeClient';
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth');
+  if (!user.profileComplete) redirect('/auth/complete-profile');
 
   const [offers, requests, { config }] = await Promise.all([
     prisma.rideOffer.findMany({
