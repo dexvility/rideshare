@@ -494,7 +494,7 @@ function AddPhoneModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ph
       body: JSON.stringify({ phone }),
     });
     setLoading(false);
-    if (!res.ok) { setError(t.serverError ?? 'Error saving phone'); return; }
+    if (!res.ok) { setError(t.invalidPhone); return; }
     onSaved(phone);
   }
 
