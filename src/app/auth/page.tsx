@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/session';
 import { AUTH_MODE, GOOGLE_ENABLED } from '@/lib/auth-config';
 import { AuthClient } from './AuthClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AuthPage({ searchParams }: { searchParams: { error?: string } }) {
   const user = await getCurrentUser();
   if (user) redirect(user.profileComplete ? '/' : '/auth/complete-profile');
