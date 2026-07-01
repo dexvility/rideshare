@@ -192,10 +192,17 @@ export function ProfileClient({ user: initialUser, authMode, ntfyUrl }: ProfileC
   );
 }
 
+function isMobile(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
 function NtfyTopic({ href, label, description }: { href: string; label: string; description: string }) {
+  // On mobile, use ntfy:// to open the installed app. On desktop, keep https://.
+  const link = isMobile() ? href.replace(/^https?:\/\//, 'ntfy://') : href;
   return (
     <div style={{ padding: '0.625rem', background: 'rgba(0,0,0,0.04)', borderRadius: '0.375rem' }}>
-      <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 500, display: 'block', marginBottom: '0.2rem' }}>
+      <a href={link} target={isMobile() ? undefined : '_blank'} rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 500, display: 'block', marginBottom: '0.2rem' }}>
         ↗ {label}
       </a>
       <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>{description}</p>
