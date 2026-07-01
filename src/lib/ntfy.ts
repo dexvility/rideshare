@@ -105,56 +105,56 @@ function buildPersonalMessage(p: PersonalPayload): NtfyMessage {
   switch (p.event) {
     case 'passenger_joined':
       return {
-        title: '🧑‍🤝‍🧑 Nový cestující',
+        title: 'Nový cestující',
         message: `${p.otherParty} se přihlásil/a k vaší jízdě z ${route}.`,
         tags: ['busts_in_silhouette'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'passenger_left':
       return {
-        title: '🚪 Cestující odhlášen',
+        title: 'Cestující odhlášen',
         message: `${p.otherParty} zrušil/a rezervaci ve vaší jízdě z ${route}.`,
         tags: ['door'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'you_were_removed':
       return {
-        title: '❌ Byli jste odhlášeni',
+        title: 'Byli jste odhlášeni',
         message: `Řidič vás odebral z jízdy z ${route}.`,
         tags: ['x'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'pickup_confirmed':
       return {
-        title: '✅ Jízda potvrzena',
+        title: 'Jízda potvrzena',
         message: `${p.otherParty} potvrdil/a, že vás vezme z ${route}.`,
         tags: ['white_check_mark'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'offer_updated':
       return {
-        title: '✏️ Jízda upravena',
+        title: 'Jízda upravena',
         message: `Řidič ${p.otherParty} upravil/a jízdu z ${route}.`,
         tags: ['pencil'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'offer_cancelled':
       return {
-        title: '🚫 Jízda zrušena',
+        title: 'Jízda zrušena',
         message: `Řidič ${p.otherParty} zrušil/a jízdu z ${route}.`,
         tags: ['no_entry'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'request_updated':
       return {
-        title: '✏️ Poptávka upravena',
+        title: 'Poptávka upravena',
         message: `${p.otherParty} upravil/a poptávku z ${route}.`,
         tags: ['pencil'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'request_cancelled':
       return {
-        title: '🚫 Poptávka zrušena',
+        title: 'Poptávka zrušena',
         message: `${p.otherParty} zrušil/a poptávku z ${route}.`,
         tags: ['no_entry'],
         ...(rideUrl && { click: rideUrl, actions: openAction }),
