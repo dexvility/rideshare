@@ -24,8 +24,6 @@ export function ProfileClient({ user: initialUser, authMode, ntfyUrl }: ProfileC
   const [hasWhatsapp, setHasWhatsapp] = useState(user.hasWhatsapp);
   const [hasSignal, setHasSignal] = useState(user.hasSignal);
   const [preferredIM, setPreferredIM] = useState<string | null>(user.preferredIM);
-  const [notifyOffers, setNotifyOffers] = useState(user.notifyOffers);
-  const [notifyRequests, setNotifyRequests] = useState(user.notifyRequests);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState('');
   const [error, setError] = useState('');
@@ -61,7 +59,6 @@ export function ProfileClient({ user: initialUser, authMode, ntfyUrl }: ProfileC
         nickname, realName, phone, email,
         hasSms, hasTelegram, hasWhatsapp, hasSignal,
         preferredIM: tickedIMs.length > 1 ? preferredIM : tickedIMs[0] || null,
-        notifyOffers, notifyRequests,
       }),
     });
 
@@ -148,18 +145,8 @@ export function ProfileClient({ user: initialUser, authMode, ntfyUrl }: ProfileC
           {/* Notification settings */}
           <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>🔔 {t.notificationSettings}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={notifyOffers} onChange={e => setNotifyOffers(e.target.checked)} style={{ width: '1rem', height: '1rem' }} />
-                {t.subscribeOffers}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={notifyRequests} onChange={e => setNotifyRequests(e.target.checked)} style={{ width: '1rem', height: '1rem' }} />
-                {t.subscribeRequests}
-              </label>
-            </div>
 
-            <div style={{ marginTop: '0.875rem', padding: '0.875rem', background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)', borderRadius: 'calc(var(--border-radius) * 0.75)', fontSize: '0.82rem' }}>
+            <div style={{ padding: '0.875rem', background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)', borderRadius: 'calc(var(--border-radius) * 0.75)', fontSize: '0.82rem' }}>
               <p style={{ marginBottom: '0.875rem' }}>{t.ntfyInfo}</p>
 
               <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>1. {t.ntfyStep1}</p>
