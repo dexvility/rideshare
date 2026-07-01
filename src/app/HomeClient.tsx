@@ -8,8 +8,9 @@ import { RideRequestCard } from '@/components/rides/RideRequestCard';
 import { OfferRideForm } from '@/components/rides/OfferRideForm';
 import { RequestRideForm } from '@/components/rides/RequestRideForm';
 import { PickupPickerModal } from '@/components/rides/PickupPickerModal';
-import type { RideOffer, RideRequest, User, OfferJoin, OfferJoinPassenger } from '@prisma/client';
+import { JoinOfferModal } from '@/components/rides/JoinOfferModal';
 import { isValidPhone } from '@/lib/validate';
+import type { RideOffer, RideRequest, User, OfferJoin, OfferJoinPassenger } from '@prisma/client';
 
 interface OfferWithDetails extends RideOffer {
   driver: User;
@@ -38,8 +39,6 @@ interface HomeClientProps {
   h2Subtitle: string;
 }
 
-interface CoPassengerInput { name: string; phone: string; }
-
 export function HomeClient({ initialOffers, initialRequests, currentUser, h1Title, h2Subtitle }: HomeClientProps) {
   const { t } = useLocale();
   const router = useRouter();
@@ -47,9 +46,6 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
   const [offers, setOffers] = useState<OfferWithDetails[]>(initialOffers);
   const [requests, setRequests] = useState<RequestWithUser[]>(initialRequests);
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
-  const [joinSeats, setJoinSeats] = useState(1);
-  const [coPassengers, setCoPassengers] = useState<CoPassengerInput[]>([]);
-  const [joinError, setJoinError] = useState('');
   const [toast, setToast] = useState('');
   const [userPhone, setUserPhone] = useState(currentUser.phone ?? '');
 
@@ -113,28 +109,6 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
     showToast(t.requestCreated);
   }
 
-  async function handleJoinOffer(offerId: string, seats: number, coPass: CoPassengerInput[]) {
-    setJoinError('');
-    const res = await fetch(`/api/rides/offers/${offerId}/join`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seats, coPassengers: coPass }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      const msg = t[err.error as keyof typeof t] as string || err.error;
-      setJoinError(msg);
-      showToast(msg);
-      return;
-    }
-    setModal({ type: 'none' });
-    setJoinSeats(1);
-    setCoPassengers([]);
-    setJoinError('');
-    await refreshData();
-    showToast('✓ Přidáno!');
-  }
-
   async function handleCancelReservation(offerId: string) {
     await fetch(`/api/rides/offers/${offerId}/join`, { method: 'DELETE' });
     await refreshData();
@@ -159,18 +133,6 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
     await fetch(`/api/rides/requests/${requestId}`, { method: 'DELETE' });
     await refreshData();
     showToast('Poptávka zrušena.');
-  }
-
-  function updateJoinSeats(seats: number, max: number) {
-    const clamped = Math.max(1, Math.min(seats, max));
-    setJoinSeats(clamped);
-    const extraCount = Math.max(0, clamped - 1);
-    setCoPassengers(prev => {
-      const next = [...prev];
-      while (next.length < extraCount) next.push({ name: '', phone: '+420' });
-      while (next.length > extraCount) next.pop();
-      return next;
-    });
   }
 
   return (
@@ -245,7 +207,7 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
                 currentUserId={currentUser.id}
                 onJoin={(id) => {
                   const o = offers.find(o => o.id === id);
-                  if (o) { setJoinSeats(1); setCoPassengers([]); setModal({ type: 'join', offer: o }); }
+                  if (o) setModal({ type: 'join', offer: o });
                 }}
                 onEdit={(offer) => setModal({ type: 'offer-form', edit: offer })}
                 onDelete={handleDeleteOffer}
@@ -368,96 +330,11 @@ export function HomeClient({ initialOffers, initialRequests, currentUser, h1Titl
       )}
 
       {modal.type === 'join' && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setModal({ type: 'none' })}>
-          <div className="modal-box">
-            <h2 style={{ fontFamily: 'var(--font-display), Georgia, serif', fontSize: '1.25rem', marginBottom: '1rem' }}>
-              🚗 {t.joinOffer}
-            </h2>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-              {modal.offer.fromAddress} → {modal.offer.toAddress}
-            </p>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>
-                {t.passengers}
-              </label>
-              <input
-                className="input-base"
-                type="number"
-                min={1}
-                max={modal.offer.availableSeats}
-                value={joinSeats}
-                onChange={e => updateJoinSeats(parseInt(e.target.value) || 1, modal.offer.availableSeats)}
-              />
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                {t.seatsLeft(modal.offer.availableSeats)}
-              </p>
-            </div>
-
-            {coPassengers.length > 0 && (
-              <div style={{ marginBottom: '1.25rem' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.625rem' }}>{t.coPassengerDetails}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {coPassengers.map((cp, idx) => (
-                    <div key={idx} style={{ padding: '0.75rem', background: 'var(--color-background)', borderRadius: 'calc(var(--border-radius) * 0.75)', border: '1px solid var(--color-border)' }}>
-                      <p style={{ fontSize: '0.78rem', fontWeight: 500, marginBottom: '0.5rem' }}>{t.addCoPassenger} {idx + 1}</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                        <input
-                          className="input-base"
-                          placeholder={t.coPassengerName}
-                          value={cp.name}
-                          onChange={e => {
-                            const next = [...coPassengers];
-                            next[idx] = { ...next[idx], name: e.target.value };
-                            setCoPassengers(next);
-                          }}
-                          style={{ fontSize: '0.85rem', padding: '0.5rem 0.625rem' }}
-                        />
-                        <input
-                          className="input-base"
-                          placeholder={t.coPassengerPhone}
-                          value={cp.phone}
-                          onChange={e => {
-                            const next = [...coPassengers];
-                            next[idx] = { ...next[idx], phone: e.target.value };
-                            setCoPassengers(next);
-                          }}
-                          style={{ fontSize: '0.85rem', padding: '0.5rem 0.625rem' }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {joinError && (
-              <p style={{ color: 'var(--color-error)', fontSize: '0.85rem', marginBottom: '1rem' }}>{joinError}</p>
-            )}
-
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button className="btn-secondary" onClick={() => { setModal({ type: 'none' }); setJoinError(''); }}>{t.cancel}</button>
-              <button
-                className="btn-primary"
-                disabled={joinSeats < 1 || joinSeats > modal.offer.availableSeats}
-                onClick={() => {
-                  for (const cp of coPassengers) {
-                    if (!cp.name.trim() || !cp.phone.trim()) {
-                      setJoinError(t.coPassengerFillAll);
-                      return;
-                    }
-                    if (!isValidPhone(cp.phone)) {
-                      setJoinError(t.coPassengerPhoneInvalid);
-                      return;
-                    }
-                  }
-                  handleJoinOffer(modal.offer.id, joinSeats, coPassengers);
-                }}
-              >
-                {t.joinOffer}
-              </button>
-            </div>
-          </div>
-        </div>
+        <JoinOfferModal
+          offer={modal.offer}
+          onClose={() => setModal({ type: 'none' })}
+          onJoined={async () => { setModal({ type: 'none' }); await refreshData(); showToast('✓ Přidáno!'); }}
+        />
       )}
 
       {modal.type === 'pickup-picker' && (

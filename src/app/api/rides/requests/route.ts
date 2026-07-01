@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
 
   await notifyGlobal({
     kind: 'request',
+    rideId: request.id,
     from: fromAddress, to: toAddress,
     date: new Date(date).toLocaleDateString('cs-CZ'),
     time: desiredTime,

@@ -98,7 +98,7 @@ function detectLocaleFromHeader(): 'cs' | 'en' {
   }
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children, modal }: { children: React.ReactNode; modal: React.ReactNode }) {
   const user = await getCurrentUserSafe();
   const { appName, heroEmoji } = await getBrandingSafe();
   const detectedLocale = detectLocaleFromHeader();
@@ -122,6 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main className="min-h-screen pb-20">
             {children}
           </main>
+          {modal}
         </Providers>
       </body>
     </html>

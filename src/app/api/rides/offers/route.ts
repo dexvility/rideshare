@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
   // Notify
   await notifyGlobal({
     kind: 'offer',
+    rideId: offer.id,
     from: fromAddress,
     to: toAddress,
     date: new Date(date).toLocaleDateString('cs-CZ'),

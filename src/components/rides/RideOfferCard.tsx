@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useLocale } from '@/app/providers';
 import { ContactButton } from '@/components/ui/ContactButton';
 import { shortenAddress } from '@/lib/geo';
@@ -217,6 +218,13 @@ export function RideOfferCard({ offer, currentUserId, onJoin, onEdit, onDelete, 
             </button>
           </>
         )}
+        <Link
+          href={`/rides/offers/${offer.id}`}
+          className="btn-ghost"
+          style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
+        >
+          📋 {t.detail}
+        </Link>
       </div>
     </div>
   );

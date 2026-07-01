@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useLocale } from '@/app/providers';
 import { shortenAddress } from '@/lib/geo';
 import type { RideRequest, User } from '@prisma/client';
@@ -133,6 +134,13 @@ export function RideRequestCard({ request, currentUserId, onIWillTakeYou, onEdit
             </button>
           </>
         )}
+        <Link
+          href={`/rides/requests/${request.id}`}
+          className="btn-ghost"
+          style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', textDecoration: 'none' }}
+        >
+          📋 {t.detail}
+        </Link>
       </div>
     </div>
   );
