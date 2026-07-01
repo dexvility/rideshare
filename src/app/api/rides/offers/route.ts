@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     date: new Date(date).toLocaleDateString('cs-CZ'),
     time: departureTime,
     driverOrRequester: offer.driver.realName,
+    seats: offer.totalSeats,
   });
 
   return NextResponse.json(offer, { status: 201 });

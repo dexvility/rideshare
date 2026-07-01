@@ -1,6 +1,7 @@
 const NTFY_BASE = (process.env.NTFY_URL || 'https://ntfy.sh').replace(/\/$/, '');
 const TOPIC_OFFERS   = 'svatba-jizdy-nabidky';
 const TOPIC_REQUESTS = 'svatba-jizdy-poptavky';
+const APP_URL = process.env.APP_URL?.replace(/\/$/, '') ?? null;
 
 export function personalTopic(userId: string) {
   return `jizdy-${userId}`;
@@ -8,6 +9,14 @@ export function personalTopic(userId: string) {
 
 export function ntfySubscribeUrl(topic: string) {
   return `${NTFY_BASE}/${topic}`;
+}
+
+/** "Brno, okres Brno-město, South Moravian Region, Czechia" → "Brno, okres Brno-město" */
+function shortAddress(full: string): string {
+  const parts = full.split(', ');
+  const okresIdx = parts.findIndex(p => p.toLowerCase().startsWith('okres'));
+  if (okresIdx !== -1) return parts.slice(0, okresIdx + 1).join(', ');
+  return parts.slice(0, 2).join(', ');
 }
 
 // ── Global payload (new ride listing) ────────────────────────────────────────
@@ -19,6 +28,7 @@ interface GlobalPayload {
   date: string;
   time: string;
   driverOrRequester: string;
+  seats?: number;
 }
 
 // ── Personal payload (booking interactions) ───────────────────────────────────
@@ -39,50 +49,121 @@ interface PersonalPayload {
   to: string;
   date: string;
   time: string;
-  otherParty: string; // the name of the person who triggered the event
+  otherParty: string;
 }
 
 // ── Message builders ──────────────────────────────────────────────────────────
 
-function buildGlobalMessage(p: GlobalPayload): { title: string; message: string; tags: string[] } {
-  const kindLabel = p.kind === 'offer' ? 'nabídka jízdy' : 'poptávka jízdy';
-  return {
-    title: `Nová ${kindLabel}`,
-    message: `${p.driverOrRequester}: ${p.from} → ${p.to} | ${p.date} ${p.time}`,
-    tags: p.kind === 'offer' ? ['car'] : ['raised_hand'],
-  };
+type NtfyMessage = {
+  title: string;
+  message: string;
+  tags: string[];
+  click?: string;
+  actions?: Array<{ action: 'view'; label: string; url: string }>;
+};
+
+function viewAction(label: string, url: string) {
+  return { action: 'view' as const, label, url };
 }
 
-function buildPersonalMessage(p: PersonalPayload): { title: string; message: string; tags: string[] } {
-  const route = `${p.from} → ${p.to} | ${p.date} ${p.time}`;
+function buildGlobalMessage(p: GlobalPayload): NtfyMessage {
+  const from = shortAddress(p.from);
+  const to = shortAddress(p.to);
+  const route = `${from} → ${to} | ${p.date} ${p.time}`;
+
+  if (p.kind === 'offer') {
+    const seats = p.seats ?? 1;
+    const seatsLabel = seats === 1 ? '1 místo' : `${seats} místa`;
+    return {
+      title: 'Nová nabídka jízdy',
+      message: `${p.driverOrRequester} nabízí ${seatsLabel} z ${route}. Klikněte pro rezervaci.`,
+      tags: ['car'],
+      ...(APP_URL && { click: APP_URL, actions: [viewAction('Rezervovat jízdu', APP_URL)] }),
+    };
+  } else {
+    return {
+      title: 'Nová poptávka jízdy',
+      message: `${p.driverOrRequester} hledá odvoz z ${route}. Klikněte pro nabídnutí jízdy.`,
+      tags: ['raised_hand'],
+      ...(APP_URL && { click: APP_URL, actions: [viewAction('Vzít je s sebou', APP_URL)] }),
+    };
+  }
+}
+
+function buildPersonalMessage(p: PersonalPayload): NtfyMessage {
+  const from = shortAddress(p.from);
+  const to = shortAddress(p.to);
+  const route = `${from} → ${to} | ${p.date} ${p.time}`;
+  const openAction = APP_URL ? [viewAction('Otevřít jízdu', APP_URL)] : undefined;
+
   switch (p.event) {
     case 'passenger_joined':
-      return { title: '🧑‍🤝‍🧑 Nový cestující', message: `${p.otherParty} se přihlásil/a k vaší jízdě\n${route}`, tags: ['busts_in_silhouette'] };
+      return {
+        title: '🧑‍🤝‍🧑 Nový cestující',
+        message: `${p.otherParty} se přihlásil/a k vaší jízdě z ${route}.`,
+        tags: ['busts_in_silhouette'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'passenger_left':
-      return { title: '🚪 Cestující odhlášen', message: `${p.otherParty} zrušil/a rezervaci ve vaší jízdě\n${route}`, tags: ['door'] };
+      return {
+        title: '🚪 Cestující odhlášen',
+        message: `${p.otherParty} zrušil/a rezervaci ve vaší jízdě z ${route}.`,
+        tags: ['door'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'you_were_removed':
-      return { title: '❌ Byli jste odhlášeni', message: `Řidič vás odebral z jízdy\n${route}`, tags: ['x'] };
+      return {
+        title: '❌ Byli jste odhlášeni',
+        message: `Řidič vás odebral z jízdy z ${route}.`,
+        tags: ['x'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'pickup_confirmed':
-      return { title: '✅ Jízda potvrzena', message: `${p.otherParty} potvrdil/a, že vás vezme\n${route}`, tags: ['white_check_mark'] };
+      return {
+        title: '✅ Jízda potvrzena',
+        message: `${p.otherParty} potvrdil/a, že vás vezme z ${route}.`,
+        tags: ['white_check_mark'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'offer_updated':
-      return { title: '✏️ Jízda upravena', message: `Řidič ${p.otherParty} upravil/a jízdu, na kterou jedete\n${route}`, tags: ['pencil'] };
+      return {
+        title: '✏️ Jízda upravena',
+        message: `Řidič ${p.otherParty} upravil/a jízdu z ${route}.`,
+        tags: ['pencil'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'offer_cancelled':
-      return { title: '🚫 Jízda zrušena', message: `Řidič ${p.otherParty} zrušil/a jízdu, na kterou jste byli přihlášeni\n${route}`, tags: ['no_entry'] };
+      return {
+        title: '🚫 Jízda zrušena',
+        message: `Řidič ${p.otherParty} zrušil/a jízdu z ${route}.`,
+        tags: ['no_entry'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'request_updated':
-      return { title: '✏️ Poptávka upravena', message: `${p.otherParty} upravil/a poptávku, ke které jste se přihlásili\n${route}`, tags: ['pencil'] };
+      return {
+        title: '✏️ Poptávka upravena',
+        message: `${p.otherParty} upravil/a poptávku z ${route}.`,
+        tags: ['pencil'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
     case 'request_cancelled':
-      return { title: '🚫 Poptávka zrušena', message: `${p.otherParty} zrušil/a poptávku, ke které jste se přihlásili\n${route}`, tags: ['no_entry'] };
+      return {
+        title: '🚫 Poptávka zrušena',
+        message: `${p.otherParty} zrušil/a poptávku z ${route}.`,
+        tags: ['no_entry'],
+        ...(APP_URL && { click: APP_URL, actions: openAction }),
+      };
   }
 }
 
 // ── Send helpers ──────────────────────────────────────────────────────────────
 
-async function sendToTopic(topic: string, title: string, message: string, tags: string[]) {
+async function sendToTopic(topic: string, msg: NtfyMessage) {
   try {
     const res = await fetch(`${NTFY_BASE}/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ topic, title, message, tags }),
+      body: JSON.stringify({ topic, ...msg }),
     });
     if (!res.ok) console.error(`ntfy publish failed for topic ${topic}:`, res.status);
   } catch (e) {
@@ -95,14 +176,12 @@ async function sendToTopic(topic: string, title: string, message: string, tags: 
 /** Publish a new ride listing to the global discovery topic. Only for 'created'. */
 export async function notifyGlobal(payload: GlobalPayload) {
   const topic = payload.kind === 'offer' ? TOPIC_OFFERS : TOPIC_REQUESTS;
-  const { title, message, tags } = buildGlobalMessage(payload);
-  await sendToTopic(topic, title, message, tags);
+  await sendToTopic(topic, buildGlobalMessage(payload));
 }
 
 /** Publish a personal interaction event to a specific user's topic. */
 export async function notifyPersonal(userId: string, payload: PersonalPayload) {
-  const { title, message, tags } = buildPersonalMessage(payload);
-  await sendToTopic(personalTopic(userId), title, message, tags);
+  await sendToTopic(personalTopic(userId), buildPersonalMessage(payload));
 }
 
 /** @deprecated Use notifyGlobal for new listings only. */
