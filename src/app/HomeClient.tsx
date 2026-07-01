@@ -9,6 +9,7 @@ import { OfferRideForm } from '@/components/rides/OfferRideForm';
 import { RequestRideForm } from '@/components/rides/RequestRideForm';
 import { PickupPickerModal } from '@/components/rides/PickupPickerModal';
 import { JoinOfferModal } from '@/components/rides/JoinOfferModal';
+import { isValidPhone } from '@/lib/validate';
 import type { RideOffer, RideRequest, User, OfferJoin, OfferJoinPassenger } from '@prisma/client';
 
 interface OfferWithDetails extends RideOffer {
