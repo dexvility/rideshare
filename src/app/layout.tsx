@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import './globals.css';
 import { NavBar } from '@/components/ui/NavBar';
 import { PwaBanner } from '@/components/ui/PwaBanner';
+import { NtfyBanner } from '@/components/ui/NtfyBanner';
 import { Providers } from './providers';
 import { DEFAULT_THEME } from '@/lib/theme';
 
@@ -116,6 +117,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <Providers detectedLocale={detectedLocale}>
           <PwaBanner />
+          {user && <NtfyBanner />}
           <NavBar user={user} appName={appName} heroEmoji={heroEmoji} />
           <main className="min-h-screen pb-20">
             {children}

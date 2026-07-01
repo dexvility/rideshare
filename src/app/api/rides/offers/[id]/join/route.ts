@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { notifyPersonal } from '@/lib/ntfy';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const offer = await prisma.rideOffer.findUnique({
     where: { id: params.id },
-    include: { joins: true },
+    include: { driver: true, joins: true },
   });
 
   if (!offer || offer.isCancelled) return NextResponse.json({ error: 'not found' }, { status: 404 });
@@ -37,11 +38,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           .map(p => ({ name: p.name, phone: p.phone })),
       },
     },
+    include: { user: true },
   });
 
   await prisma.rideOffer.update({
     where: { id: params.id },
     data: { availableSeats: newAvailable, isFull: newAvailable === 0 },
+  });
+
+  // Notify the driver
+  await notifyPersonal(offer.driverId, {
+    event: 'passenger_joined',
+    from: offer.fromAddress, to: offer.toAddress,
+    date: offer.date.toLocaleDateString('cs-CZ'),
+    time: offer.departureTime,
+    otherParty: join.user.realName,
   });
 
   return NextResponse.json({ ok: true, joinId: join.id });
@@ -55,19 +66,17 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   const offer = await prisma.rideOffer.findUnique({
     where: { id: params.id },
-    include: { joins: true },
+    include: { driver: true, joins: { include: { user: true } } },
   });
   if (!offer) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
   let join;
-  if (targetUserId) {
-    // Driver removing a specific passenger from their own offer.
-    if (offer.driverId !== session.userId) {
-      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-    }
+  const driverRemoving = !!targetUserId;
+
+  if (driverRemoving) {
+    if (offer.driverId !== session.userId) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
     join = offer.joins.find(j => j.userId === targetUserId);
   } else {
-    // Passenger cancelling their own reservation.
     join = offer.joins.find(j => j.userId === session.userId);
   }
 
@@ -77,12 +86,31 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     prisma.offerJoin.delete({ where: { id: join.id } }),
     prisma.rideOffer.update({
       where: { id: params.id },
-      data: {
-        availableSeats: offer.availableSeats + join.seats,
-        isFull: false,
-      },
+      data: { availableSeats: offer.availableSeats + join.seats, isFull: false },
     }),
   ]);
+
+  const routeInfo = {
+    from: offer.fromAddress, to: offer.toAddress,
+    date: offer.date.toLocaleDateString('cs-CZ'),
+    time: offer.departureTime,
+  };
+
+  if (driverRemoving) {
+    // Driver removed the passenger — notify the passenger
+    await notifyPersonal(join.userId, {
+      event: 'you_were_removed',
+      otherParty: offer.driver.realName,
+      ...routeInfo,
+    });
+  } else {
+    // Passenger left — notify the driver
+    await notifyPersonal(offer.driverId, {
+      event: 'passenger_left',
+      otherParty: join.user.realName,
+      ...routeInfo,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

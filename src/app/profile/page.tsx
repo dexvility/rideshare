@@ -9,5 +9,6 @@ export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth');
   if (!user.profileComplete) redirect('/auth/complete-profile');
-  return <ProfileClient user={JSON.parse(JSON.stringify(user))} authMode={AUTH_MODE} />;
+  const ntfyUrl = (process.env.NTFY_URL || 'https://ntfy.sh').replace(/\/$/, '');
+  return <ProfileClient user={JSON.parse(JSON.stringify(user))} authMode={AUTH_MODE} ntfyUrl={ntfyUrl} />;
 }

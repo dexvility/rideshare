@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { nickname, realName, phone, email, hasSms, hasTelegram, hasWhatsapp, hasSignal, preferredIM, notifyOffers, notifyRequests, profileComplete } = body;
+  const { nickname, realName, phone, email, hasSms, hasTelegram, hasWhatsapp, hasSignal, preferredIM, profileComplete } = body;
 
   if (nickname && nickname !== session.user.nickname) {
     const existing = await prisma.user.findUnique({ where: { nickname } });
@@ -42,8 +42,6 @@ export async function PATCH(req: NextRequest) {
       ...(hasWhatsapp !== undefined && { hasWhatsapp }),
       ...(hasSignal !== undefined && { hasSignal }),
       ...(preferredIM !== undefined && { preferredIM }),
-      ...(notifyOffers !== undefined && { notifyOffers }),
-      ...(notifyRequests !== undefined && { notifyRequests }),
       ...(profileComplete === true && { profileComplete: true }),
     },
   });

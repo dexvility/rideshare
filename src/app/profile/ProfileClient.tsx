@@ -9,9 +9,10 @@ import { isValidPhone, isValidEmail } from '@/lib/validate';
 interface ProfileClientProps {
   user: User;
   authMode: AuthMode;
+  ntfyUrl: string;
 }
 
-export function ProfileClient({ user: initialUser, authMode }: ProfileClientProps) {
+export function ProfileClient({ user: initialUser, authMode, ntfyUrl }: ProfileClientProps) {
   const { t } = useLocale();
   const [user, setUser] = useState(initialUser);
   const [nickname, setNickname] = useState(user.nickname);
@@ -23,8 +24,6 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
   const [hasWhatsapp, setHasWhatsapp] = useState(user.hasWhatsapp);
   const [hasSignal, setHasSignal] = useState(user.hasSignal);
   const [preferredIM, setPreferredIM] = useState<string | null>(user.preferredIM);
-  const [notifyOffers, setNotifyOffers] = useState(user.notifyOffers);
-  const [notifyRequests, setNotifyRequests] = useState(user.notifyRequests);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState('');
   const [error, setError] = useState('');
@@ -60,7 +59,6 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
         nickname, realName, phone, email,
         hasSms, hasTelegram, hasWhatsapp, hasSignal,
         preferredIM: tickedIMs.length > 1 ? preferredIM : tickedIMs[0] || null,
-        notifyOffers, notifyRequests,
       }),
     });
 
@@ -147,24 +145,33 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
           {/* Notification settings */}
           <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>🔔 {t.notificationSettings}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={notifyOffers} onChange={e => setNotifyOffers(e.target.checked)} style={{ width: '1rem', height: '1rem' }} />
-                {t.subscribeOffers}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                <input type="checkbox" checked={notifyRequests} onChange={e => setNotifyRequests(e.target.checked)} style={{ width: '1rem', height: '1rem' }} />
-                {t.subscribeRequests}
-              </label>
-            </div>
 
-            <div style={{ marginTop: '0.875rem', padding: '0.875rem', background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)', borderRadius: 'calc(var(--border-radius) * 0.75)', fontSize: '0.82rem' }}>
-              <p style={{ marginBottom: '0.375rem' }}>{t.ntfyInfo}</p>
-              <p>{t.ntfyTopicOffers} <code style={{ background: 'rgba(0,0,0,0.06)', padding: '0.1rem 0.35rem', borderRadius: '0.25rem' }}>svatba-jizdy-nabidky</code></p>
-              <p style={{ marginTop: '0.2rem' }}>{t.ntfyTopicRequests} <code style={{ background: 'rgba(0,0,0,0.06)', padding: '0.1rem 0.35rem', borderRadius: '0.25rem' }}>svatba-jizdy-poptavky</code></p>
-              <a href="https://ntfy.sh" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '0.5rem', color: 'var(--color-primary)', fontWeight: 500 }}>
+            <div style={{ padding: '0.875rem', background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)', borderRadius: 'calc(var(--border-radius) * 0.75)', fontSize: '0.82rem' }}>
+              <p style={{ marginBottom: '0.875rem' }}>{t.ntfyInfo}</p>
+
+              <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>1. {t.ntfyStep1}</p>
+              <a href="https://ntfy.sh" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>
                 ↗ {t.downloadNtfy}
               </a>
+
+              <p style={{ fontWeight: 600, margin: '0.875rem 0 0.5rem' }}>2. {t.ntfyStep2}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                <NtfyTopic
+                  href={`${ntfyUrl}/svatba-jizdy-nabidky`}
+                  label={t.ntfySubOffers}
+                  description={t.ntfySubOffersDesc}
+                />
+                <NtfyTopic
+                  href={`${ntfyUrl}/svatba-jizdy-poptavky`}
+                  label={t.ntfySubRequests}
+                  description={t.ntfySubRequestsDesc}
+                />
+                <NtfyTopic
+                  href={`${ntfyUrl}/jizdy-${initialUser.id}`}
+                  label={t.ntfySubPersonal}
+                  description={t.ntfySubPersonalDesc}
+                />
+              </div>
             </div>
           </div>
 
@@ -181,6 +188,24 @@ export function ProfileClient({ user: initialUser, authMode }: ProfileClientProp
       {authMode === 'password' && (
         <ChangePasswordSection hasPassword={!!initialUser.passwordHash} />
       )}
+    </div>
+  );
+}
+
+function isMobile(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function NtfyTopic({ href, label, description }: { href: string; label: string; description: string }) {
+  // On mobile, use ntfy:// to open the installed app. On desktop, keep https://.
+  const link = isMobile() ? href.replace(/^https?:\/\//, 'ntfy://') : href;
+  return (
+    <div style={{ padding: '0.625rem', background: 'rgba(0,0,0,0.04)', borderRadius: '0.375rem' }}>
+      <a href={link} target={isMobile() ? undefined : '_blank'} rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 500, display: 'block', marginBottom: '0.2rem' }}>
+        ↗ {label}
+      </a>
+      <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>{description}</p>
     </div>
   );
 }
