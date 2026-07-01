@@ -117,6 +117,20 @@ export function NavBar({ user, appName, heroEmoji }: NavBarProps) {
                   onClick={() => setMenuOpen(false)}
                 >
                   <Link
+                    href="/"
+                    style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none' }}
+                    className="hover:bg-gray-50 sm:hidden"
+                  >
+                    🛣️ {t.allRides}
+                  </Link>
+                  <Link
+                    href="/my-rides"
+                    style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none', borderBottom: '1px solid var(--color-border)' }}
+                    className="hover:bg-gray-50 sm:hidden"
+                  >
+                    🚗 {t.myRides}
+                  </Link>
+                  <Link
                     href="/profile"
                     style={{ display: 'block', padding: '0.75rem 1rem', color: 'var(--color-text)', fontSize: '0.9rem', textDecoration: 'none' }}
                     className="hover:bg-gray-50"
