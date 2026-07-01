@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { notifyPersonal } from '@/lib/ntfy';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { offerId } = body;
   if (!offerId) return NextResponse.json({ error: 'offerId required' }, { status: 400 });
 
-  const request = await prisma.rideRequest.findUnique({ where: { id: params.id } });
+  const request = await prisma.rideRequest.findUnique({ where: { id: params.id }, include: { requester: true } });
   if (!request || request.isCancelled) return NextResponse.json({ error: 'not found' }, { status: 404 });
   if (request.isFulfilled) return NextResponse.json({ error: 'already fulfilled' }, { status: 409 });
 
@@ -49,6 +50,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: { isFulfilled: true, fulfilledByOfferId: offer.id },
     }),
   ]);
+
+  // Notify the requester that a driver confirmed to pick them up
+  const driverOffer = await prisma.rideOffer.findUnique({ where: { id: offerId }, include: { driver: true } });
+  if (driverOffer) {
+    await notifyPersonal(request.requesterId, {
+      event: 'pickup_confirmed',
+      from: request.fromAddress, to: request.toAddress,
+      date: request.date.toLocaleDateString('cs-CZ'),
+      time: request.desiredTime,
+      otherParty: driverOffer.driver.realName,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

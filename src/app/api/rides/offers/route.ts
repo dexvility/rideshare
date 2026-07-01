@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { notifyRide } from '@/lib/ntfy';
+import { notifyGlobal } from '@/lib/ntfy';
 
 export async function GET(req: NextRequest) {
   const offers = await prisma.rideOffer.findMany({
@@ -46,9 +46,8 @@ export async function POST(req: NextRequest) {
   });
 
   // Notify
-  await notifyRide({
+  await notifyGlobal({
     kind: 'offer',
-    action: 'created',
     from: fromAddress,
     to: toAddress,
     date: new Date(date).toLocaleDateString('cs-CZ'),
