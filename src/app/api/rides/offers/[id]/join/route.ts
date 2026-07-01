@@ -46,9 +46,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { availableSeats: newAvailable, isFull: newAvailable === 0 },
   });
 
-  // Notify the driver
   await notifyPersonal(offer.driverId, {
     event: 'passenger_joined',
+    rideId: params.id, rideType: 'offer',
     from: offer.fromAddress, to: offer.toAddress,
     date: offer.date.toLocaleDateString('cs-CZ'),
     time: offer.departureTime,
@@ -97,16 +97,16 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   };
 
   if (driverRemoving) {
-    // Driver removed the passenger — notify the passenger
     await notifyPersonal(join.userId, {
       event: 'you_were_removed',
+      rideId: params.id, rideType: 'offer',
       otherParty: offer.driver.realName,
       ...routeInfo,
     });
   } else {
-    // Passenger left — notify the driver
     await notifyPersonal(offer.driverId, {
       event: 'passenger_left',
+      rideId: params.id, rideType: 'offer',
       otherParty: join.user.realName,
       ...routeInfo,
     });

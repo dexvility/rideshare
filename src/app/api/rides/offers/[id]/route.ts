@@ -3,6 +3,15 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { notifyPersonal } from '@/lib/ntfy';
 
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const offer = await prisma.rideOffer.findUnique({
+    where: { id: params.id },
+    include: { driver: true, joins: { include: { user: true, coPassengers: true } } },
+  });
+  if (!offer) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  return NextResponse.json(offer);
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -34,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Notify each passenger on their personal topic
   await Promise.all(offer.joins.map(j =>
-    notifyPersonal(j.userId, { event: 'offer_updated', ...routeInfo })
+    notifyPersonal(j.userId, { event: 'offer_updated', rideId: params.id, rideType: 'offer', ...routeInfo })
   ));
 
   return NextResponse.json(updated);
@@ -61,7 +70,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   };
 
   await Promise.all(offer.joins.map(j =>
-    notifyPersonal(j.userId, { event: 'offer_cancelled', ...routeInfo })
+    notifyPersonal(j.userId, { event: 'offer_cancelled', rideId: params.id, rideType: 'offer', ...routeInfo })
   ));
 
   return NextResponse.json({ ok: true });

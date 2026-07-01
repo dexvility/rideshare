@@ -23,6 +23,7 @@ function shortAddress(full: string): string {
 
 interface GlobalPayload {
   kind: 'offer' | 'request';
+  rideId: string;
   from: string;
   to: string;
   date: string;
@@ -45,6 +46,8 @@ type PersonalEvent =
 
 interface PersonalPayload {
   event: PersonalEvent;
+  rideId: string;
+  rideType: 'offer' | 'request';
   from: string;
   to: string;
   date: string;
@@ -74,18 +77,20 @@ function buildGlobalMessage(p: GlobalPayload): NtfyMessage {
   if (p.kind === 'offer') {
     const seats = p.seats ?? 1;
     const seatsLabel = seats === 1 ? '1 místo' : `${seats} místa`;
+    const url = APP_URL ? `${APP_URL}/rides/offers/${p.rideId}?action=book` : null;
     return {
       title: 'Nová nabídka jízdy',
       message: `${p.driverOrRequester} nabízí ${seatsLabel} z ${route}. Klikněte pro rezervaci.`,
       tags: ['car'],
-      ...(APP_URL && { click: APP_URL, actions: [viewAction('Rezervovat jízdu', APP_URL)] }),
+      ...(url && { click: url, actions: [viewAction('Rezervovat jízdu', url)] }),
     };
   } else {
+    const url = APP_URL ? `${APP_URL}/rides/requests/${p.rideId}?action=pickup` : null;
     return {
       title: 'Nová poptávka jízdy',
       message: `${p.driverOrRequester} hledá odvoz z ${route}. Klikněte pro nabídnutí jízdy.`,
       tags: ['raised_hand'],
-      ...(APP_URL && { click: APP_URL, actions: [viewAction('Vzít je s sebou', APP_URL)] }),
+      ...(url && { click: url, actions: [viewAction('Vzít je s sebou', url)] }),
     };
   }
 }
@@ -94,7 +99,8 @@ function buildPersonalMessage(p: PersonalPayload): NtfyMessage {
   const from = shortAddress(p.from);
   const to = shortAddress(p.to);
   const route = `${from} → ${to} | ${p.date} ${p.time}`;
-  const openAction = APP_URL ? [viewAction('Otevřít jízdu', APP_URL)] : undefined;
+  const rideUrl = APP_URL ? `${APP_URL}/rides/${p.rideType}s/${p.rideId}` : null;
+  const openAction = rideUrl ? [viewAction('Otevřít jízdu', rideUrl)] : undefined;
 
   switch (p.event) {
     case 'passenger_joined':
@@ -102,56 +108,56 @@ function buildPersonalMessage(p: PersonalPayload): NtfyMessage {
         title: '🧑‍🤝‍🧑 Nový cestující',
         message: `${p.otherParty} se přihlásil/a k vaší jízdě z ${route}.`,
         tags: ['busts_in_silhouette'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'passenger_left':
       return {
         title: '🚪 Cestující odhlášen',
         message: `${p.otherParty} zrušil/a rezervaci ve vaší jízdě z ${route}.`,
         tags: ['door'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'you_were_removed':
       return {
         title: '❌ Byli jste odhlášeni',
         message: `Řidič vás odebral z jízdy z ${route}.`,
         tags: ['x'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'pickup_confirmed':
       return {
         title: '✅ Jízda potvrzena',
         message: `${p.otherParty} potvrdil/a, že vás vezme z ${route}.`,
         tags: ['white_check_mark'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'offer_updated':
       return {
         title: '✏️ Jízda upravena',
         message: `Řidič ${p.otherParty} upravil/a jízdu z ${route}.`,
         tags: ['pencil'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'offer_cancelled':
       return {
         title: '🚫 Jízda zrušena',
         message: `Řidič ${p.otherParty} zrušil/a jízdu z ${route}.`,
         tags: ['no_entry'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'request_updated':
       return {
         title: '✏️ Poptávka upravena',
         message: `${p.otherParty} upravil/a poptávku z ${route}.`,
         tags: ['pencil'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
     case 'request_cancelled':
       return {
         title: '🚫 Poptávka zrušena',
         message: `${p.otherParty} zrušil/a poptávku z ${route}.`,
         tags: ['no_entry'],
-        ...(APP_URL && { click: APP_URL, actions: openAction }),
+        ...(rideUrl && { click: rideUrl, actions: openAction }),
       };
   }
 }

@@ -56,6 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (driverOffer) {
     await notifyPersonal(request.requesterId, {
       event: 'pickup_confirmed',
+      rideId: offerId, rideType: 'offer',
       from: request.fromAddress, to: request.toAddress,
       date: request.date.toLocaleDateString('cs-CZ'),
       time: request.desiredTime,
